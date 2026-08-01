@@ -96,6 +96,14 @@ export function GroundedProof() {
         );
         tl.to(q(`.gp-num-${i}`), { backgroundColor: 'rgba(52,211,153,0.16)', color: '#6ee7b7', duration: 0.25 }, at);
         tl.to(p, { strokeDashoffset: 0, duration: 0.5, ease: 'power2.inOut', onComplete: () => (p.dataset.done = '1') }, at + 0.05);
+        // a bright head dot rides the beam as it draws
+        tl.to(q(`.gp-dot-${i}`), { autoAlpha: 1, duration: 0.05 }, at + 0.05);
+        tl.to(
+          q(`.gp-dot-${i}`),
+          { motionPath: { path: p, align: p, alignOrigin: [0.5, 0.5] }, duration: 0.5, ease: 'power2.inOut' },
+          at + 0.05,
+        );
+        tl.to(q(`.gp-dot-${i}`), { autoAlpha: 0, duration: 0.08 }, at + 0.52);
         const card = q('.gp-card')[NUM_TO_CARD[i]];
         tl.to(card, { y: -6, borderColor: 'rgba(52,211,153,0.45)', duration: 0.3 }, at + 0.45);
         tl.to(card, { y: 0, duration: 0.4 }, at + 0.85);
@@ -106,12 +114,17 @@ export function GroundedProof() {
           at + 0.5,
         );
       });
-      tl.fromTo(q('.gp-footer'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 }, '+=0.2');
+      // finale: every beam pulses once in unison — the system checks out
+      tl.to(q('.gp-beam'), { opacity: 0.35, duration: 0.25, yoyo: true, repeat: 1, ease: 'sine.inOut' }, '+=0.15');
+      tl.fromTo(q('.gp-footer'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 }, '<');
 
       ScrollTrigger.create({
         trigger: root.current,
         start: 'top 60%',
-        onEnter: () => tl.play(0),
+        onEnter: () => {
+          tl.invalidate(); // re-sample beam paths (they may have been recomputed on resize)
+          tl.play(0);
+        },
         onLeaveBack: () => {
           tl.pause(0);
           q<SVGPathElement>('.gp-beam').forEach((p) => delete p.dataset.done);
@@ -146,6 +159,9 @@ export function GroundedProof() {
           </defs>
           {NUM_TO_CARD.map((_, i) => (
             <path key={i} className={`gp-beam gp-beam-${i}`} fill="none" stroke="url(#gp-grad)" strokeWidth="2" />
+          ))}
+          {NUM_TO_CARD.map((_, i) => (
+            <circle key={`dot-${i}`} className={`gp-dot gp-dot-${i}`} r="3.5" fill="#6ee7b7" opacity="0" />
           ))}
         </svg>
 

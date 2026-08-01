@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGSAP } from '@gsap/react';
 import { gsap, ScrollTrigger } from '../motion/gsap';
 import { useReducedMotion } from '../motion/useReducedMotion';
@@ -17,7 +17,25 @@ const LINKS = [
 export function LandingNav() {
   const ref = useRef<HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [active, setActive] = useState<string | null>(null);
   const reduced = useReducedMotion();
+
+  // Active link tracks whichever section sits in the middle band of the viewport.
+  useEffect(() => {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) setActive(`#${e.target.id}`);
+        }
+      },
+      { rootMargin: '-35% 0px -55% 0px' },
+    );
+    for (const { href } of LINKS) {
+      const el = document.querySelector(href);
+      if (el) io.observe(el);
+    }
+    return () => io.disconnect();
+  }, []);
 
   useGSAP(
     () => {
@@ -56,7 +74,10 @@ export function LandingNav() {
             <a
               key={l.href}
               href={l.href}
-              className="text-sm text-slate-400 transition-colors hover:text-white"
+              className={cn(
+                'text-sm transition-colors hover:text-white',
+                active === l.href ? 'text-white' : 'text-slate-400',
+              )}
             >
               {l.label}
             </a>

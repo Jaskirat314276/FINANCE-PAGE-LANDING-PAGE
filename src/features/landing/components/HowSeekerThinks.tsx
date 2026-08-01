@@ -73,6 +73,19 @@ function PinnedPipeline() {
       gsap.set(q('.hww-scene-0'), { autoAlpha: 1 });
       gsap.set(q('.hww-head'), { autoAlpha: 0, y: 14 });
       gsap.set(q('.hww-head-0'), { autoAlpha: 1, y: 0 });
+      gsap.set(q('.s2-packet'), { autoAlpha: 0 });
+      gsap.set(q('.s4-caret'), { autoAlpha: 0 });
+
+      /** Delta that moves `el`'s center onto `target`'s center (gsap x/y units). */
+      const centerDelta = (el: Element, target: Element | undefined, axis: 'x' | 'y') => {
+        if (!target) return 0;
+        const tr = target.getBoundingClientRect();
+        const er = el.getBoundingClientRect();
+        const cur = Number(gsap.getProperty(el, axis)) || 0;
+        return axis === 'x'
+          ? tr.left + tr.width / 2 - (er.left + er.width / 2) + cur
+          : tr.top + tr.height / 2 - (er.top + er.height / 2) + cur;
+      };
       const tl = gsap.timeline({
         defaults: { ease: 'power2.out' },
         scrollTrigger: {
@@ -154,7 +167,8 @@ function PinnedPipeline() {
         0.125,
       );
 
-      /* S2 — data streams in. */
+      /* S2 — data streams in: pills arrive, beziers dash-draw toward the
+         profile, glowing packets ride the streams (reverse on scrub-back). */
       tl.fromTo(q('.s2-profile'), { autoAlpha: 0, x: -40 }, { autoAlpha: 1, x: 0, duration: 0.03 }, 0.19);
       tl.fromTo(
         q('.s2-pill'),
@@ -162,44 +176,98 @@ function PinnedPipeline() {
         { autoAlpha: 1, x: 0, duration: 0.04, stagger: 0.006 },
         0.21,
       );
-      tl.fromTo(q('.s2-cap'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.02 }, 0.3);
+      tl.to(
+        q('.s2-path'),
+        { strokeDashoffset: 0, duration: 0.045, stagger: 0.008, ease: 'power2.inOut' },
+        0.222,
+      );
+      q('.s2-packet').forEach((packet, i) => {
+        const path = q<SVGPathElement>(`.s2-path-${i}`)[0];
+        if (!path || !path.getAttribute('d')) return;
+        const t0 = 0.24 + i * 0.012;
+        tl.to(packet, { autoAlpha: 1, duration: 0.004 }, t0)
+          .to(
+            packet,
+            {
+              motionPath: { path, align: path, alignOrigin: [0.5, 0.5] },
+              duration: 0.05,
+              ease: 'power1.inOut',
+            },
+            t0,
+          )
+          .to(packet, { autoAlpha: 0, duration: 0.006 }, t0 + 0.046);
+      });
+      tl.fromTo(q('.s2-cap'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.02 }, 0.31);
 
-      /* S3 — the engine computes: donut + Monte Carlo. */
+      /* S3 — inputs feed the engine hex, it pulses, then it computes:
+         donut + Monte Carlo. */
       tl.fromTo(
         q('.s3-engine'),
         { autoAlpha: 0, scale: 0.8 },
         { autoAlpha: 1, scale: 1, duration: 0.03, ease: 'back.out(1.6)' },
         0.39,
       );
+      tl.fromTo(q('.s3-in-a'), { autoAlpha: 0, x: -60 }, { autoAlpha: 1, x: 0, duration: 0.02 }, 0.398);
+      tl.fromTo(q('.s3-in-b'), { autoAlpha: 0, x: 60 }, { autoAlpha: 1, x: 0, duration: 0.02 }, 0.406);
+      // absorption: both inputs collapse into the hex, which pulses on arrival
+      const hexEl = q('.s3-hex')[0];
+      tl.to(
+        q('.s3-in-a'),
+        {
+          x: (_: number, el: Element) => centerDelta(el, hexEl, 'x'),
+          y: (_: number, el: Element) => centerDelta(el, hexEl, 'y'),
+          scale: 0.25,
+          autoAlpha: 0,
+          duration: 0.022,
+          ease: 'power2.in',
+        },
+        0.43,
+      );
+      tl.to(
+        q('.s3-in-b'),
+        {
+          x: (_: number, el: Element) => centerDelta(el, hexEl, 'x'),
+          y: (_: number, el: Element) => centerDelta(el, hexEl, 'y'),
+          scale: 0.25,
+          autoAlpha: 0,
+          duration: 0.022,
+          ease: 'power2.in',
+        },
+        0.438,
+      );
+      tl.to(q('.s3-hex'), { scale: 1.12, duration: 0.007, yoyo: true, repeat: 1, ease: 'power2.inOut' }, 0.452);
+      tl.to(q('.s3-hex'), { scale: 1.12, duration: 0.007, yoyo: true, repeat: 1, ease: 'power2.inOut' }, 0.465);
       DONUT_SEGS.forEach((s, k) => {
         tl.fromTo(
           q(`.s3-seg-${k}`),
           { attr: { 'stroke-dasharray': '0 100' } },
           { attr: { 'stroke-dasharray': `${s.pct} ${100 - s.pct}` }, duration: 0.03, ease: 'none' },
-          0.405 + k * 0.026,
+          0.472 + k * 0.024,
         );
         tl.fromTo(
           q(`.s3-leg-${k}`),
           { autoAlpha: 0, x: -10 },
           { autoAlpha: 1, x: 0, duration: 0.02 },
-          0.41 + k * 0.026,
+          0.477 + k * 0.024,
         );
       });
       const mcProxy = { v: 0 };
       tl.to(
         mcProxy,
-        { v: 1, duration: 0.16, ease: 'none', onUpdate: () => mcRef.current?.draw(mcProxy.v) },
-        0.44,
+        { v: 1, duration: 0.12, ease: 'none', onUpdate: () => mcRef.current?.draw(mcProxy.v) },
+        0.478,
       );
-      tl.fromTo(q('.s3-cap'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.02 }, 0.58);
+      tl.fromTo(q('.s3-cap'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.02 }, 0.588);
 
       /* S4 — typewriter + citations (scrubbing back un-types it). */
+      tl.to(q('.s4-caret'), { autoAlpha: 1, duration: 0.003 }, 0.632);
       tl.fromTo(
         q('.s4-word'),
         { autoAlpha: 0 },
         { autoAlpha: 1, duration: 0.004, stagger: 0.0022, ease: 'none' },
         0.635,
       );
+      tl.to(q('.s4-caret'), { autoAlpha: 0, duration: 0.004 }, 0.748);
       tl.fromTo(
         q('.s4-src'),
         { autoAlpha: 0, y: 8, scale: 0.9 },

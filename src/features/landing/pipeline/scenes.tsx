@@ -1,4 +1,4 @@
-import { type ReactNode, type RefObject } from 'react';
+import { useLayoutEffect, useRef, type ReactNode, type RefObject } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Donut, DONUT_SEGS, MonteCarloCanvas, RiskRing, type MCHandle } from './bits';
@@ -78,8 +78,81 @@ const PILL_GROUPS: { name: string; pills: string[] }[] = [
 
 export function SceneMarket({ mode }: { mode: SceneMode }) {
   const pinned = mode === 'pinned';
+  const streamRoot = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  // Data-stream beziers: from each pill group toward the profile card.
+  // Runtime-computed (like GroundedProof's beams) so they survive resizes.
+  // Layout effect: the paths need a `d` BEFORE the parent's pinned timeline
+  // builds its motionPath tweens (child layout effects run first).
+  useLayoutEffect(() => {
+    if (!pinned) return;
+    const rootEl = streamRoot.current;
+    const svg = svgRef.current;
+    if (!rootEl || !svg) return;
+
+    const compute = () => {
+      const rb = rootEl.getBoundingClientRect();
+      if (!rb.width || !rb.height) return;
+      svg.setAttribute('viewBox', `0 0 ${rb.width} ${rb.height}`);
+      const card = rootEl.querySelector<HTMLElement>('.s2-profile');
+      const groups = rootEl.querySelectorAll<HTMLElement>('.s2-group');
+      if (!card) return;
+      const cr = card.getBoundingClientRect();
+      const ex = cr.right - rb.left + 6;
+      const ey = cr.top + cr.height / 2 - rb.top;
+      groups.forEach((g, i) => {
+        const path = svg.querySelector<SVGPathElement>(`.s2-path-${i}`);
+        if (!path) return;
+        const gr = g.getBoundingClientRect();
+        const sx = gr.left - rb.left - 8;
+        const sy = gr.top + gr.height / 2 - rb.top;
+        const dx = Math.max(50, (sx - ex) * 0.45);
+        path.setAttribute('d', `M ${sx} ${sy} C ${sx - dx} ${sy}, ${ex + dx} ${ey}, ${ex} ${ey}`);
+        const L = path.getTotalLength();
+        path.style.strokeDasharray = String(L);
+        if (!path.dataset.drawn) path.style.strokeDashoffset = String(L);
+      });
+    };
+
+    compute();
+    const ro = new ResizeObserver(compute);
+    ro.observe(rootEl);
+    window.addEventListener('resize', compute);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', compute);
+    };
+  }, [pinned]);
+
   return (
-    <div className="relative flex h-full w-full items-center justify-center">
+    <div ref={streamRoot} className="relative flex h-full w-full items-center justify-center">
+      {pinned && (
+        <svg
+          ref={svgRef}
+          className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+          aria-hidden
+        >
+          <defs>
+            <linearGradient id="s2-stream-grad" x1="1" y1="0" x2="0" y2="0">
+              <stop offset="0" stopColor="#3987e5" stopOpacity="0.7" />
+              <stop offset="1" stopColor="#34d399" stopOpacity="0.7" />
+            </linearGradient>
+          </defs>
+          {[0, 1, 2].map((i) => (
+            <path
+              key={i}
+              className={`s2-path s2-path-${i}`}
+              fill="none"
+              stroke="url(#s2-stream-grad)"
+              strokeWidth="1.5"
+            />
+          ))}
+          {[0, 1, 2].map((i) => (
+            <circle key={i} className={`s2-packet s2-packet-${i}`} r="4" fill="#6ee7b7" opacity="0" />
+          ))}
+        </svg>
+      )}
       <div
         className={cn(
           'relative z-10 flex w-full items-center gap-10',
@@ -96,7 +169,7 @@ export function SceneMarket({ mode }: { mode: SceneMode }) {
         <div className="flex min-w-0 flex-col gap-3">
           {PILL_GROUPS.map((g, gi) => (
             <FlowIn mode={mode} delay={gi * 0.14} key={g.name}>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="s2-group flex flex-wrap items-center gap-2">
                 <span className={cn('text-[10px] uppercase tracking-wider text-slate-600', pinned && 'w-24 text-right')}>
                   {g.name}
                 </span>
@@ -122,12 +195,34 @@ export function SceneMarket({ mode }: { mode: SceneMode }) {
 /* ── Scene 3 · "A quant engine does the math" ────────────────── */
 
 export function SceneEngine({ mode, mcRef }: { mode: SceneMode; mcRef?: RefObject<MCHandle> }) {
+  const pinned = mode === 'pinned';
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-6">
       <FlowIn mode={mode}>
-        <div className="s3-engine glass relative px-6 py-3">
-          <span className="eyebrow !text-accent-soft">Quant engine</span>
-          <span className="absolute -inset-px rounded-2xl border border-accent/30" aria-hidden />
+        <div className="s3-engine relative flex items-center justify-center">
+          {pinned && (
+            <span className="s3-in-a glass absolute right-full mr-10 whitespace-nowrap rounded-full px-4 py-2 text-xs text-slate-300">
+              Your profile
+            </span>
+          )}
+          <div className="s3-hex flex items-center gap-3">
+            <svg viewBox="0 0 56 56" className="h-12 w-12 shrink-0" aria-hidden>
+              <polygon
+                points="28,3 50,15.5 50,40.5 28,53 6,40.5 6,15.5"
+                fill="rgba(52,211,153,0.08)"
+                stroke="#34d399"
+                strokeWidth="1.5"
+              />
+              <circle cx="28" cy="28" r="6" fill="none" stroke="#34d399" strokeWidth="1.5" />
+              <path d="M28 16v6M28 34v6M16 28h6M34 28h6" stroke="#34d399" strokeWidth="1.5" />
+            </svg>
+            <span className="eyebrow !text-accent-soft">Quant engine</span>
+          </div>
+          {pinned && (
+            <span className="s3-in-b glass absolute left-full ml-10 whitespace-nowrap rounded-full px-4 py-2 text-xs text-slate-300">
+              Live market
+            </span>
+          )}
         </div>
       </FlowIn>
       <div className="grid w-full max-w-2xl grid-cols-1 items-center gap-8 sm:grid-cols-2">
@@ -214,6 +309,12 @@ export function SceneAI({ mode }: { mode: SceneMode }) {
                   {w.text}{' '}
                 </span>
               ),
+            )}
+            {mode === 'pinned' && (
+              <span
+                className="s4-caret caret-blink ml-0.5 inline-block h-4 w-[2px] translate-y-[3px] bg-accent"
+                aria-hidden
+              />
             )}
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-2">

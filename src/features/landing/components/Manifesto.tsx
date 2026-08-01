@@ -28,6 +28,7 @@ export function Manifesto() {
 
       if (reduced) {
         gsap.set(q('.mf-word'), { opacity: 1 });
+        gsap.set(q('.mf-grad'), { opacity: 1 });
         q<HTMLElement>('.mf-stat-num').forEach((el) => {
           el.textContent = formatIN(Number(el.dataset.value));
         });
@@ -56,6 +57,18 @@ export function Manifesto() {
           trigger: q('.mf-text')[0],
           start: 'top 78%',
           end: 'bottom 45%',
+          scrub: 0.6,
+        },
+      });
+
+      // "shows its work." flips to the brand gradient only at full reveal.
+      gsap.to(q('.mf-grad'), {
+        opacity: 1,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: q('.mf-text')[0],
+          start: 'bottom 52%',
+          end: 'bottom 42%',
           scrub: 0.6,
         },
       });
@@ -112,9 +125,20 @@ export function Manifesto() {
               [{ t: 'Most investors get generic tips.' }],
               [{ t: 'We built the advisor we wanted —' }],
               [{ t: 'one that knows your goals, your risk, your taxes,' }],
-              [{ t: 'and' }, { t: 'shows its work.', c: 'text-gradient' }],
             ]}
           />
+          {/* last line by hand: the gradient flips ON only at full reveal */}
+          <span className="split-line">
+            <span className="split-word mf-word opacity-[0.13]">and</span>{' '}
+            <span className="relative inline-block whitespace-nowrap">
+              <span aria-hidden className="mf-grad text-gradient absolute inset-0 opacity-0">
+                shows its work.
+              </span>
+              <span className="split-word mf-word opacity-[0.13]">shows</span>{' '}
+              <span className="split-word mf-word opacity-[0.13]">its</span>{' '}
+              <span className="split-word mf-word opacity-[0.13]">work.</span>
+            </span>
+          </span>
         </h2>
 
         <div className="mf-stats mt-20 grid grid-cols-2 gap-4 lg:grid-cols-4">

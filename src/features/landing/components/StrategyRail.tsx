@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import { Section } from './Section';
 import { STRATEGIES } from '../data';
 import { useReducedMotion } from '../motion/useReducedMotion';
-import { cn } from '@/lib/utils';
+import { animateValue, cn } from '@/lib/utils';
 
 const RISK_STYLES: Record<string, string> = {
   LOW: 'text-status-good bg-status-good/10',
@@ -13,6 +13,17 @@ const RISK_STYLES: Record<string, string> = {
 
 function FitRing({ fit }: { fit: number }) {
   const reduced = useReducedMotion();
+  const numRef = useRef<HTMLSpanElement>(null);
+  const inView = useInView(numRef, { once: true, amount: 0.6 });
+
+  // The number counts up in step with the ring draw.
+  useEffect(() => {
+    if (reduced || !inView) return;
+    return animateValue(0, fit, 1000, (v) => {
+      if (numRef.current) numRef.current.textContent = String(Math.round(v));
+    });
+  }, [reduced, inView, fit]);
+
   return (
     <div className="relative h-14 w-14">
       <svg viewBox="0 0 100 100" className="-rotate-90">
@@ -33,8 +44,11 @@ function FitRing({ fit }: { fit: number }) {
           transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
         />
       </svg>
-      <span className="tnum absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
-        {fit}
+      <span
+        ref={numRef}
+        className="tnum absolute inset-0 flex items-center justify-center text-xs font-bold text-white"
+      >
+        {reduced ? fit : 0}
       </span>
     </div>
   );

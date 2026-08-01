@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   ChartPieIcon,
@@ -23,6 +24,15 @@ const ICONS = {
 export function FeatureGrid() {
   const reduced = useReducedMotion();
   const canHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  // Heroicons don't ship pathLength — set it once so the CSS hover redraw
+  // (stroke-dasharray: 1 → dashoffset animation) works on every icon.
+  useEffect(() => {
+    gridRef.current
+      ?.querySelectorAll<SVGPathElement>('.fg-icon path')
+      .forEach((p) => p.setAttribute('pathLength', '1'));
+  }, []);
 
   return (
     <Section
@@ -37,7 +47,7 @@ export function FeatureGrid() {
       center
       className="py-24"
     >
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div ref={gridRef} className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map(({ icon, title, text }, i) => {
           const Icon = ICONS[icon];
           return (
@@ -60,7 +70,7 @@ export function FeatureGrid() {
               }
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-accent/25 to-series-1/25 text-accent transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
-                <Icon className="h-6 w-6" />
+                <Icon className="fg-icon h-6 w-6" />
               </div>
               <h3 className="mt-4 font-semibold text-white">{title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-400">{text}</p>
