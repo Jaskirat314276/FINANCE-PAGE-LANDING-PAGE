@@ -7,7 +7,7 @@ import { Magnetic } from '../motion/Reveal';
 import { SplitWords } from '../motion/SplitWords';
 import { ButtonLink } from '@/components/Button';
 import { GrainOverlay } from './GrainOverlay';
-import { ONBOARDING_STEPS } from '../data';
+import { APP_URL, ONBOARDING_STEPS } from '../data';
 
 export function FinalCTA() {
   const root = useRef<HTMLElement>(null);
@@ -79,11 +79,11 @@ export function FinalCTA() {
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <Magnetic>
-            <ButtonLink href="/auth" size="lg">
+            <ButtonLink href={APP_URL} size="lg">
               Create my profile <span aria-hidden>→</span>
             </ButtonLink>
           </Magnetic>
-          <ButtonLink href="/auth" size="lg" variant="ghost">
+          <ButtonLink href={APP_URL} size="lg" variant="ghost">
             Explore the demo — no keys needed
           </ButtonLink>
         </div>

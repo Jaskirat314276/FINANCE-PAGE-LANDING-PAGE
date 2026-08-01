@@ -1,5 +1,8 @@
 /** Ground-truth content from the Seeker AI product (see docs/landing-brief.md). */
 
+/** The live Seeker AI web app — every landing CTA redirects here. */
+export const APP_URL = 'https://seeker-ai-web.vercel.app/';
+
 export const QUESTIONS = [
   'Should I invest ₹50,000 today?',
   'Build a ₹10 lakh portfolio',

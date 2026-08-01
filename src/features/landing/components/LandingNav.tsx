@@ -5,6 +5,7 @@ import { useReducedMotion } from '../motion/useReducedMotion';
 import { Logo } from '@/components/Logo';
 import { ButtonLink } from '@/components/Button';
 import { cn } from '@/lib/utils';
+import { APP_URL } from '../data';
 
 const LINKS = [
   { href: '#how-it-works', label: 'How it works' },
@@ -62,10 +63,10 @@ export function LandingNav() {
           ))}
         </div>
         <div className="flex items-center gap-3">
-          <a href="/auth" className="hidden text-sm text-slate-300 transition hover:text-white sm:block">
+          <a href={APP_URL} className="hidden text-sm text-slate-300 transition hover:text-white sm:block">
             Sign in
           </a>
-          <ButtonLink href="/auth" size="sm">
+          <ButtonLink href={APP_URL} size="sm">
             Get started
           </ButtonLink>
         </div>

@@ -7,7 +7,7 @@ import { Magnetic } from '../motion/Reveal';
 import { ButtonLink } from '@/components/Button';
 import { GrainOverlay } from './GrainOverlay';
 import { HeroStatic } from './HeroStatic';
-import { QUESTIONS } from '../data';
+import { APP_URL, QUESTIONS } from '../data';
 import { mulberry32 } from '@/lib/utils';
 
 // Three.js stays in its own lazy chunk — never loaded under reduced motion.
@@ -154,7 +154,7 @@ export function Hero() {
 
         <div className="hero-ctas mt-9 flex flex-wrap items-center justify-center gap-3">
           <Magnetic>
-            <ButtonLink href="/auth" size="lg">
+            <ButtonLink href={APP_URL} size="lg">
               Get started free
               <span aria-hidden>→</span>
             </ButtonLink>

@@ -1,5 +1,5 @@
 import { Logo } from '@/components/Logo';
-import { SEBI_DISCLAIMER } from '../data';
+import { APP_URL, SEBI_DISCLAIMER } from '../data';
 
 const COLS = [
   {
@@ -9,8 +9,8 @@ const COLS = [
   },
   {
     title: 'Resources',
-    links: ['GitHub', 'Roadmap', 'License (MIT)'],
-    hrefs: ['https://github.com/Jaskirat314276/FINANCE-AGENT', '#', '#'],
+    links: ['Open the app', 'GitHub', 'Roadmap', 'License (MIT)'],
+    hrefs: [APP_URL, 'https://github.com/Jaskirat314276/FINANCE-AGENT', '#', '#'],
   },
 ];
 
